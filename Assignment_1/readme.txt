@@ -9,3 +9,6 @@ There are many ways to go about upsampling. Here I have implemented nearest neig
 
 I've also considered using Transposed Convolution or Unpooling, but haven't implemented it yet.
 
+Update:
+
+Seems we need to do down sampling instead of up scaling, so I add this part, using numpy stride.
