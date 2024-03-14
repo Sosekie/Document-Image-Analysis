@@ -71,11 +71,15 @@ class UNet(nn.Module):
         R4 = self.c4(self.d3(R3))
         R5 = self.c5(self.d4(R4))
         O1 = self.c6(self.u1(R5,R4))
+        O1 = self.sigmoid(O1)
         O2 = self.c7(self.u2(O1, R3))
+        O2 = self.sigmoid(O2)
         O3 = self.c8(self.u3(O2, R2))
+        O3 = self.sigmoid(O3)
         O4 = self.c9(self.u4(O3, R1))
         output = self.out(O4)
         output = self.sigmoid(output)
+        # output = F.softmax(output, dim=-1)
 
         return output
 
