@@ -16,6 +16,9 @@ Document layout segmentation By UNet
 1.  input：data/JPEGImages   mask：data/SegmentationClass
 2.  python train.py
 3.  weights are saved in params
+4.  rm -rv ./train_image
+5.  rm -rv ./params
+6.  rm -rv ./params ./train_image
 
 #### How to test
 1.  python test.py

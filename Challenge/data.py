@@ -4,13 +4,36 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 from utils import *
+from PIL import ImageFilter
+import cv2
 from torchvision import transforms
 from torch.nn.functional import one_hot
 
+class MedianFilter(object):
+    def __init__(self, size=3):
+        self.size = size
+
+    def __call__(self, x):
+        return x.filter(ImageFilter.MedianFilter(self.size))
+
+class GaussianBlur(object):
+    def __init__(self, kernel_size=7, sigma=1.5):
+        self.kernel_size = kernel_size
+        self.sigma = sigma
+
+    def __call__(self, x):
+        # 将PIL图像转换为NumPy数组
+        np_image = np.array(x)
+        # 应用高斯滤波
+        np_image = cv2.GaussianBlur(np_image, (self.kernel_size, self.kernel_size), self.sigma)
+        # 将NumPy数组转换回PIL图像
+        return Image.fromarray(np_image)
+
 transform = transforms.Compose([
+    # MedianFilter(size=3),
+    GaussianBlur(),
     transforms.ToTensor()
 ])
-
 
 class MyDataset(Dataset):
     def __init__(self, path):
@@ -33,10 +56,17 @@ class MyDataset(Dataset):
         return transform(image), transform(segment_image)
     
 def Background_Threshold(out_image, threshold):
-    mask = torch.all(out_image < threshold, dim=1, keepdim=True)
-    mask = mask.expand_as(out_image)
-    out_image[mask] = 0
-    return out_image
+    result_image = out_image.clone()
+
+    mask = torch.any(result_image%(200.0/255.0) > (55.0/255.0), dim=1, keepdim=True)
+    mask = mask.expand_as(result_image)
+    result_image[mask] = 0
+
+    mask = torch.all(result_image < threshold, dim=1, keepdim=True)
+    mask = mask.expand_as(result_image)
+    result_image[mask] = 0
+
+    return result_image
 
 
 if __name__ == '__main__':
