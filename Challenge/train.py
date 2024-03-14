@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 from data import *
 from net import *
 from torchvision.utils import save_image
+import matplotlib.pyplot as plt
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(device)
@@ -16,7 +17,7 @@ weight_path = 'params/unet.pth'
 data_path = r'data'
 save_path = 'train_image'
 if __name__ == '__main__':
-    data_loader = DataLoader(MyDataset(data_path), batch_size=4, shuffle=True)
+    data_loader = DataLoader(MyDataset(data_path), batch_size=1, shuffle=True)
     net = UNet().to(device)
     if os.path.exists(weight_path):
         net.load_state_dict(torch.load(weight_path))
@@ -56,8 +57,6 @@ if __name__ == '__main__':
             torch.save(net.state_dict(), weight_path)
             print('save successfully!')
         epoch += 1
-    
-    import matplotlib.pyplot as plt
 
     plt.figure(figsize=(10, 5))  # 设置图表大小
     plt.plot(losses, label='Training Loss')  # 绘制损失值
@@ -65,4 +64,5 @@ if __name__ == '__main__':
     plt.ylabel('Loss')  # Y轴标签
     plt.title('Training Loss Over Time')  # 图表标题
     plt.legend()  # 显示图例
+    plt.savefig('training_loss_over_time.png', dpi=300)
     plt.show()  # 显示图表

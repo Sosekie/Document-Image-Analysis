@@ -1,4 +1,4 @@
-# DLA UNet
+# DIA UNet
 
 #### Introduction
 Document layout segmentation By UNet
