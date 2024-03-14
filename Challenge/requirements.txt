@@ -1,5 +1,0 @@
-matplotlib
-numpy
-Pillo
-tqdm
-wandb
