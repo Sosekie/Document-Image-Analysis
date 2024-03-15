@@ -14,6 +14,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(device)
 weights_path = 'params'
 weight_path = 'params/unet.pth'
+loss_path = 'result/loss.tensor'
 data_path = r'data'
 save_path = 'train_image'
 
@@ -36,7 +37,8 @@ if __name__ == '__main__':
     losses = []
 
     epoch = 1
-    while epoch < 100:
+    while epoch < 3000:
+    # while True:
         loss_epoch = 0.0
         for i, (image, segment_image) in enumerate(tqdm.tqdm(data_loader)):
             image, segment_image = image.to(device), segment_image.to(device)
@@ -57,7 +59,7 @@ if __name__ == '__main__':
 
             _middle_x = []
             for stack_i in range(len(middle_x)):
-                if stack_i < len(middle_x)-2:
+                if stack_i < len(middle_x)-1:
                     _middle_x.append(middle_x[stack_i][0].mean(dim=0).unsqueeze(0).expand(3, -1, -1))
                 else:
                     _middle_x.append(middle_x[stack_i][0])
@@ -84,6 +86,7 @@ if __name__ == '__main__':
 
         losses.append(loss_epoch / num_of_i)
         torch.save(net.state_dict(), weight_path)
+        torch.save(losses, loss_path)
         print('save successfully!')
         print('losses:', losses)
                 
