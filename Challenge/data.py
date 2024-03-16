@@ -7,7 +7,6 @@ from utils import *
 from PIL import ImageFilter
 import cv2
 from torchvision import transforms
-from torch.nn.functional import one_hot
 
 class MedianFilter(object):
     def __init__(self, size=3):
@@ -22,11 +21,8 @@ class GaussianBlur(object):
         self.sigma = sigma
 
     def __call__(self, x):
-        # 将PIL图像转换为NumPy数组
         np_image = np.array(x)
-        # 应用高斯滤波
         np_image = cv2.GaussianBlur(np_image, (self.kernel_size, self.kernel_size), self.sigma)
-        # 将NumPy数组转换回PIL图像
         return Image.fromarray(np_image)
 
 transform = transforms.Compose([
@@ -36,17 +32,19 @@ transform = transforms.Compose([
 ])
 
 class MyDataset(Dataset):
-    def __init__(self, path):
+    def __init__(self, path, inputdir, maskdir):
         self.path = path
-        self.name = os.listdir(os.path.join(path, 'SegmentationClass'))
+        self.maskdir = maskdir
+        self.inputdir = inputdir
+        self.name = os.listdir(os.path.join(path, maskdir))
 
     def __len__(self):
         return len(self.name)
 
     def __getitem__(self, index, resize = False):
         segment_name = self.name[index]
-        segment_path = os.path.join(self.path, 'SegmentationClass', segment_name)
-        image_path = os.path.join(self.path, 'JPEGImages', segment_name.replace('gif', 'jpg'))
+        segment_path = os.path.join(self.path, self.maskdir, segment_name)
+        image_path = os.path.join(self.path, self.inputdir, segment_name.replace('gif', 'jpg'))
         if resize == True:
             segment_image = keep_image_size_open(segment_path)
             image = keep_image_size_open_rgb(image_path)
@@ -68,10 +66,28 @@ def Background_Threshold(out_image, threshold):
 
     return result_image
 
+def reduce_yellow(input_dir, output_dir):
+
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    target_color = np.array([255, 255, 0])
+    replacement_color = np.array([0, 0, 0])
+
+    for filename in os.listdir(input_dir):
+        if filename.endswith(('.png', '.jpg', '.jpeg', '.gif')):
+            file_path = os.path.join(input_dir, filename)
+            image = Image.open(file_path)
+            image = image.convert('RGB')
+            
+            data = np.array(image)
+            data[(data == target_color).all(axis=-1)] = replacement_color
+            new_image = Image.fromarray(data, mode='RGB')
+
+            new_image.save(os.path.join(output_dir, filename))
 
 if __name__ == '__main__':
-    data = MyDataset('data')
-    print(data[0][0].shape)
-    print(data[0][1].shape)
-    out=one_hot(data[0][1].long())
-    print(out.shape)
+
+    input_directory = './data/SegmentationClass'
+    output_directory = './data/SegmentationClass_noYellow'
+    reduce_yellow(input_directory, output_directory)

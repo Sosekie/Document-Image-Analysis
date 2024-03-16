@@ -11,6 +11,8 @@ Document layout segmentation By UNet
 
 3.  conda activate DIA
 
+4.  conda activate unet
+
 #### How to train
 
 1.  input：data/JPEGImages   mask：data/SegmentationClass
