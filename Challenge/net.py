@@ -140,7 +140,7 @@ class BackAllConv2d(nn.Module):
 
     def forward(self, x):
         unfolded = F.unfold(x, kernel_size=self.kernel_size, stride=self.stride, padding=self.padding)
-        C_out = x.shape[1]  # Assuming RGB, C_out would be 3
+        C_out = x.shape[1]
         unfolded = unfolded.view(x.shape[0], C_out, self.kernel_size*self.kernel_size, -1)
         
         mask = unfolded > (self.threshold / 255)
@@ -150,8 +150,6 @@ class BackAllConv2d(nn.Module):
         mask_threshold_expanded = mask_threshold.expand(-1, C_out, self.kernel_size*self.kernel_size, -1)
         unfolded = unfolded * (~mask_threshold_expanded).float()
 
-        # Correctly reshape unfolded for F.fold
-        # Need to collapse the channel and kernel size dimensions
         unfolded = unfolded.view(x.shape[0], C_out * self.kernel_size*self.kernel_size, -1)
 
         output = F.fold(unfolded, output_size=(x.shape[2], x.shape[3]), kernel_size=self.kernel_size, stride=self.stride, padding=self.padding)
