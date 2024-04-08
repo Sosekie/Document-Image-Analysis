@@ -30,12 +30,11 @@ if __name__ == '__main__':
     net = UNet().to(device)
     if os.path.exists(weight_path):
         net.load_state_dict(torch.load(weight_path))
-        print('successful load weight！')
+        print('successful load weight!')
     else:
         print('not successful load weight')
 
     opt = optim.Adam(net.parameters())
-    # opt = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
     loss_fun = nn.CrossEntropyLoss()
     losses = []
 
