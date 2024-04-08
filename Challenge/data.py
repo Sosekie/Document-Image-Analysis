@@ -5,7 +5,6 @@ from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 from utils import *
 from PIL import ImageFilter
-import cv2
 from torchvision import transforms
 
 class MedianFilter(object):
@@ -23,11 +22,18 @@ class GaussianBlur(object):
         np_image = cv2.GaussianBlur(np_image, (self.kernel_size, self.kernel_size), self.sigma)
         return Image.fromarray(np_image)
 
+# transform = transforms.Compose([
+#     # MedianFilter(size=3),
+#     # GaussianBlur(),
+#     transforms.ToTensor()
+# ])
+
+
 transform = transforms.Compose([
-    # MedianFilter(size=3),
-    GaussianBlur(),
-    transforms.ToTensor()
+    transforms.Resize((960//2, 640//2)),
+    transforms.ToTensor(),
 ])
+
 
 class MyDataset(Dataset):
     def __init__(self, path, inputdir, maskdir):
@@ -59,11 +65,9 @@ class MyDataset_tvt(Dataset):
         
         all_names = os.listdir(os.path.join(path, maskdir))
         
-        # Splitting the dataset into training+validation and testing sets first
         train_val_names, test_names = train_test_split(all_names, test_size=0.1, random_state=seed)
         
-        # Further splitting the training+validation set into training and validation sets
-        train_names, val_names = train_test_split(train_val_names, test_size=1/9, random_state=seed)  # 1/9th of 90% is 10%
+        train_names, val_names = train_test_split(train_val_names, test_size=1/9, random_state=seed)
         
         if subset == "train":
             self.names = train_names
@@ -121,8 +125,29 @@ def reduce_yellow(input_dir, output_dir):
 
             new_image.save(os.path.join(output_dir, filename))
 
+def process_image(input_path, output_path):
+    image = Image.open(input_path)
+    image = image.convert('RGB')
+    data = image.load()
+    width, height = image.size
+    for x in range(width):
+        for y in range(height):
+            r, g, b = data[x, y]
+            if r > 160 and g > 160 and b > 160:
+                data[x, y] = (0, 0, 0)
+    image.save(output_path)
+
 if __name__ == '__main__':
 
-    input_directory = './data/SegmentationClass'
-    output_directory = './data/SegmentationClass_noYellow'
-    reduce_yellow(input_directory, output_directory)
+    # input_directory = './data/SegmentationClass'
+    # output_directory = './data/SegmentationClass_noYellow'
+    # reduce_yellow(input_directory, output_directory)
+
+    input_folder = 'data/JPEGImages'
+    output_folder = 'data/JPEGImages_black'
+    for filename in os.listdir(input_folder):
+        if filename.endswith('.jpg'):
+            input_path = os.path.join(input_folder, filename)
+            output_path = os.path.join(output_folder, filename)
+            process_image(input_path, output_path)
+            print(f'Processed and saved {filename} to {output_folder}')

@@ -1,12 +1,3 @@
-'''
- ==================板块功能描述====================
-           @Time     :2022/4/9   15:34
-           @Author   : qiaofengsheng
-           @File     :make_mask_data.py
-           @Software :PyCharm
-           @description:
- ================================================
- '''
 import os
 
 import cv2
