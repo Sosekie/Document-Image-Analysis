@@ -103,64 +103,35 @@ def train(model, train_data_loader, val_data_loader, epochs = 100):
         torch.save(train_ious, 'result/train_ious.tensor')
         torch.save(val_ious, 'result/val_ious.tensor')
 
-def visualize(train_losses, val_losses, train_ious, val_ious, filename = 'visualize'):
-    plt.figure(figsize=(10, 4))
-    plt.subplot(1, 2, 1)
-    plt.plot(train_losses, label='Training Loss')
-    plt.plot(val_losses, label='Validation Loss')
-    plt.title('Training and Validation Loss')
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.legend()
-
-    plt.subplot(1, 2, 2)
-    plt.plot(train_ious, label='Training IoU')
-    plt.plot(val_ious, label='Validation IoU')
-    plt.title('Training and Validation IoU')
-    plt.xlabel('Epoch')
-    plt.ylabel('IoU')
-    plt.legend()
-
-    plt.tight_layout()
-    plt.savefig(filename, dpi=300)
-    plt.close()
-
 
 if __name__ == '__main__':
 
-    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    # print(device)
-    # weights_path = 'params'
-    # weight_path = 'params/best_model_weights.pth'
-    # data_path = r'data'
-    # save_path = 'train_image'
-    # batch_size = 1
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(device)
+    weights_path = 'params'
+    weight_path = 'params/best_model_weights.pth'
+    data_path = r'data'
+    save_path = 'train_image'
+    batch_size = 1
 
-    # if not os.path.exists(weights_path):
-    #     os.makedirs(weights_path)
-    # if not os.path.exists(save_path):
-    #     os.makedirs(save_path)
+    if not os.path.exists(weights_path):
+        os.makedirs(weights_path)
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
 
-    # train_dataset = MyDataset_tvt(data_path, inputdir='JPEGImages_black', maskdir='SegmentationClass_noYellow', subset="train")
-    # val_dataset = MyDataset_tvt(data_path, inputdir='JPEGImages_black', maskdir='SegmentationClass_noYellow', subset="val")
-    # test_dataset = MyDataset_tvt(data_path, inputdir='JPEGImages_black', maskdir='SegmentationClass_noYellow', subset="test")
+    train_dataset = MyDataset_tvt(data_path, inputdir='JPEGImages_black', maskdir='SegmentationClass_noYellow', subset="train")
+    val_dataset = MyDataset_tvt(data_path, inputdir='JPEGImages_black', maskdir='SegmentationClass_noYellow', subset="val")
+    test_dataset = MyDataset_tvt(data_path, inputdir='JPEGImages_black', maskdir='SegmentationClass_noYellow', subset="test")
 
-    # train_data_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    # val_data_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-    # test_data_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    train_data_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_data_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    test_data_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
-    # model = UNet_simple().to(device)
-    # if os.path.exists(weight_path):
-    #     model.load_state_dict(torch.load(weight_path))
-    #     print('successful load weight!')
-    # else:
-    #     print('not successful load weight')
+    model = UNet_simple().to(device)
+    if os.path.exists(weight_path):
+        model.load_state_dict(torch.load(weight_path))
+        print('successful load weight!')
+    else:
+        print('not successful load weight')
 
-    # train(model, train_data_loader, val_data_loader, epochs = 100)
-
-    # train_losses = torch.load('result/train_losses.tensor')
-    # val_losses = torch.load('result/val_losses.tensor')
-    # train_ious = torch.load('result/train_ious.tensor')
-    # val_ious = torch.load('result/val_ious.tensor')
-
-    visualize(train_losses, val_losses, train_ious, val_ious)
+    train(model, train_data_loader, val_data_loader, epochs = 100)
