@@ -21,3 +21,9 @@ Document layout segmentation By UNet
 
 #### How to test
 1.  python test.py
+
+#### What to do 
+
+1. 2 pages about workflow, evaluate
+
+2. matrics

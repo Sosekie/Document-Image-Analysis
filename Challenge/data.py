@@ -62,13 +62,9 @@ class MyDataset_tvt(Dataset):
         self.path = path
         self.maskdir = maskdir
         self.inputdir = inputdir
-        
         all_names = os.listdir(os.path.join(path, maskdir))
-        
         train_val_names, test_names = train_test_split(all_names, test_size=0.1, random_state=seed)
-        
         train_names, val_names = train_test_split(train_val_names, test_size=1/9, random_state=seed)
-        
         if subset == "train":
             self.names = train_names
         elif subset == "val":
@@ -77,19 +73,14 @@ class MyDataset_tvt(Dataset):
             self.names = test_names
         else:
             raise ValueError(f"Unknown subset: {subset}")
-            
     def __len__(self):
         return len(self.names)
-    
     def __getitem__(self, index):
         segment_name = self.names[index]
         segment_path = os.path.join(self.path, self.maskdir, segment_name)
         image_path = os.path.join(self.path, self.inputdir, segment_name.replace('gif', 'jpg'))
-        
         segment_image = Image.open(segment_path).convert("RGB")
         image = Image.open(image_path).convert("RGB")
-        
-        # Assuming 'transform' is defined elsewhere
         return transform(image), transform(segment_image)
     
 def Background_Threshold(out_image, threshold):
