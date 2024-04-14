@@ -1,6 +1,6 @@
-/params/
-/train_image/
-/result/
+params/
+train_image/
+result/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

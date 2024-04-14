@@ -294,7 +294,7 @@ class UNet(nn.Module):
             return output
         
 class UNet_simple(nn.Module):
-    def __init__(self,num_classes = 3):
+    def __init__(self,num_classes = 1):
         super(UNet_simple, self).__init__()
         self.c1 = Conv_Block(3,64)
         self.d1 = DownSample(64)
@@ -314,7 +314,8 @@ class UNet_simple(nn.Module):
         self.u4 = UpSample(128)
         self.c9 = Conv_Block(128, 64)
         self.out = nn.Conv2d(64,num_classes,3,1,1)
-        self.sigmoid = nn.Sigmoid()
+        # self.sigmoid = nn.Sigmoid()
+        self.relu = nn.ReLU()
 
     def forward(self, x, view):
         R1 = self.c1(x)
@@ -326,8 +327,10 @@ class UNet_simple(nn.Module):
         O2 = self.c7(self.u2(O1, R3))
         O3 = self.c8(self.u3(O2, R2))
         O4 = self.c9(self.u4(O3, R1))
-        last = self.out(O4)
-        output = self.sigmoid(last)
+        last = self.out(O4).squeeze(1)
+        # output = self.sigmoid(last)
+        # output = F.log_softmax(last, dim=1)
+        output = self.relu(last)
 
         if view:
             R1_v = R1
@@ -343,8 +346,3 @@ class UNet_simple(nn.Module):
             return output, middle_x
         else:
             return output
-
-if __name__ == '__main__':
-    x=torch.randn(2,3,256,256)
-    net=UNet()
-    print(net(x).shape)
