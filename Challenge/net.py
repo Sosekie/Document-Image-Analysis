@@ -45,7 +45,11 @@ class DownResidual(nn.Module):
 class UpSample(nn.Module):
     def __init__(self,channel):
         super(UpSample, self).__init__()
-        self.layer=nn.Conv2d(channel,channel//2,1,1)
+        self.layer=nn.Sequential(
+            nn.Conv2d(channel,channel//2,1,1),
+            nn.BatchNorm2d(channel//2),
+            nn.LeakyReLU()
+        )
     def forward(self,x,feature_map):
         up=F.interpolate(x,scale_factor=2,mode='nearest')
         out=self.layer(up)
@@ -315,6 +319,8 @@ class UNet_simple(nn.Module):
         self.c9 = Conv_Block(128, 64)
         self.out = nn.Conv2d(64,num_classes,3,1,1)
         self.sigmoid = nn.Sigmoid()
+        self.relu = nn.LeakyReLU()
+        self.norm = nn.BatchNorm2d(num_classes)
 
     def forward(self, x, view):
         R1 = self.c1(x)
@@ -327,7 +333,8 @@ class UNet_simple(nn.Module):
         O3 = self.c8(self.u3(O2, R2))
         O4 = self.c9(self.u4(O3, R1))
         last = self.out(O4).squeeze(1)
-        output = self.sigmoid(last)
+        output = self.sigmoid(self.norm(last))
+        # output = last
 
         if view:
             R1_v = R1
