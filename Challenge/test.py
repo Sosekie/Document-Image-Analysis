@@ -1,36 +1,25 @@
-import os
-
-import cv2
-import numpy as np
+import tqdm
 import torch
+from matrix import *
 
-from net import *
-from utils import *
-from data import *
-from torchvision.utils import save_image
-from PIL import Image
-net=UNet(3).cuda()
 
-weights='params/unet.pth'
-if os.path.exists(weights):
-    net.load_state_dict(torch.load(weights))
-    print('successfully')
-else:
-    print('no loading')
+def test(model, test_data_loader, device):
+    model.eval()
+    test_loss = 0.0
+    test_iou = 0.0
+    loss_fun = torch.nn.CrossEntropyLoss()
 
-_input=input('please input JPEGImages path:')
+    with torch.no_grad():
+        for image, segment_image in tqdm.tqdm(test_data_loader):
+            image, segment_image = image.to(device), segment_image.to(device).float()
+            output = model(image, view=False)
+            loss = loss_fun(output, segment_image)
+            test_loss += loss.item()
 
-img=keep_image_size_open_rgb(_input)
-img_data=transform(img).cuda()
-img_data=torch.unsqueeze(img_data,dim=0)
-net.eval()
-out=net(img_data)
-out=torch.argmax(out,dim=1)
-out=torch.squeeze(out,dim=0)
-out=out.unsqueeze(dim=0)
-print(set((out).reshape(-1).tolist()))
-out=(out).permute((1,2,0)).cpu().detach().numpy()
-cv2.imwrite('result/result.png',out)
-cv2.imshow('out',out*255.0)
-cv2.waitKey(0)
+            iou = calc_iou(output, segment_image)
+            test_iou += iou.item()
 
+    avg_test_loss = test_loss / len(test_data_loader)
+    avg_test_iou = test_iou / len(test_data_loader)
+
+    print(f'Test Loss: {avg_test_loss:.4f}, Test IoU: {avg_test_iou:.4f}')
