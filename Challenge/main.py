@@ -54,5 +54,5 @@ class MyPipeline:
 
 if __name__ == '__main__':
     pipeline = MyPipeline(data_path='data', batch_size=1)
-    pipeline.train()
+    # pipeline.train(epochs=300)
     pipeline.test()

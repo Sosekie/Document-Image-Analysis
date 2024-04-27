@@ -2,14 +2,26 @@ import torch
 from scipy.ndimage import distance_transform_edt as distance
 import numpy as np
 
-def calc_iou(out_image, labels):
-    preds = torch.sigmoid(out_image) > 0.5
-    preds = preds.long()
-    labels = labels.long()
-    intersection = (preds & labels).float().sum((1, 2))
-    union = (preds | labels).float().sum((1, 2))
-    iou = (intersection + 1e-6) / (union + 1e-6)
-    return iou.mean()
+def calculate_iou(out_image, segment_image, threshold=0.5):
+    out_image_binary = (out_image > threshold).float()
+    segment_image_binary = (segment_image > threshold).float()
+    
+    intersection = torch.logical_and(out_image_binary, segment_image_binary).float().sum(dim=(2, 3)) + 1
+    union = torch.logical_or(out_image_binary, segment_image_binary).float().sum(dim=(2, 3)) + 1
+    iou = intersection / union
+    mean_iou = iou.mean(dim=1)
+
+    # print('intersection: ', intersection)
+    # print('union: ', union)
+    # print('mean_iou: ', mean_iou)
+    # print('iou: ', iou)
+    
+    # mean_iou = mean_iou.cpu().numpy()
+    # iou = iou.cpu().numpy()
+    # print(f'mean_iou: {mean_iou[0]:.2f}')
+    # print("iou: ", [f"{value:.2f}" for value in iou[0]])
+    
+    return iou, mean_iou
 
 def binary_distance_transform(batch):
     batch_transformed = np.zeros_like(batch)

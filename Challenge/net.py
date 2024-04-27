@@ -321,6 +321,7 @@ class UNet_simple(nn.Module):
         self.sigmoid = nn.Sigmoid()
         self.relu = nn.LeakyReLU()
         self.norm = nn.BatchNorm2d(num_classes)
+        self.softmax = nn.Softmax()
 
     def forward(self, x, view):
         R1 = self.c1(x)
@@ -333,8 +334,7 @@ class UNet_simple(nn.Module):
         O3 = self.c8(self.u3(O2, R2))
         O4 = self.c9(self.u4(O3, R1))
         last = self.out(O4).squeeze(1)
-        output = self.sigmoid(self.norm(last))
-        # output = last
+        output = self.sigmoid(last)
 
         if view:
             R1_v = R1
