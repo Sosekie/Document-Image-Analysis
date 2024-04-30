@@ -1,4 +1,5 @@
 params/
+checkpoints/
 train_image/
 result/
 

@@ -2,7 +2,7 @@ import os
 import torch
 from torch.utils.data import DataLoader
 from data import MyDataset_tvt_label_onehot
-from net import UNet_simple
+from net import UNet_simple, UNetPlusPlus
 from train import train
 from test import test
 
@@ -36,7 +36,7 @@ class MyPipeline:
         self.test_data_loader = DataLoader(self.test_dataset, batch_size=self.batch_size, shuffle=False)
 
     def init_model(self):
-        model = UNet_simple().to(self.device)
+        model = UNetPlusPlus().to(self.device)
         if os.path.exists(self.weight_path):
             model.load_state_dict(torch.load(self.weight_path))
             print('Successful load weight!')
@@ -54,5 +54,5 @@ class MyPipeline:
 
 if __name__ == '__main__':
     pipeline = MyPipeline(data_path='data', batch_size=1)
-    # pipeline.train(epochs=300)
+    pipeline.train(epochs=300)
     pipeline.test()
