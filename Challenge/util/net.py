@@ -414,7 +414,7 @@ class UNetPlusPlus(nn.Module):
         self.out = nn.Conv2d(64, num_classes, 3, padding=1)
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self, x, view):
+    def forward(self, x):
         R1 = self.c1(x)
         R2 = self.c2(self.d1(R1))
         R3 = self.c3(self.d2(R2))
@@ -426,9 +426,4 @@ class UNetPlusPlus(nn.Module):
         O4 = self.c9(self.u4(O3, R1))
         last = self.out(O4)
         output = self.sigmoid(last)
-
-        if view:
-            middle_x = None
-            return output, middle_x
-        else:
-            return output
+        return output

@@ -1,9 +1,9 @@
 import os
 import torch
 from torch.utils.data import DataLoader
-from data import MyDataset_tvt_label_onehot
-from net import UNet_simple, UNetPlusPlus
-from train import train
+from data import MyDataset
+from util.net import UNet_simple, UNetPlusPlus
+from util.train import train
 from test import test
 
 
@@ -28,9 +28,9 @@ class MyPipeline:
                 os.makedirs(path)
 
     def load_datasets(self):
-        self.train_dataset = MyDataset_tvt_label_onehot(self.data_path, inputdir='JPEGImages_black', maskdir='SegmentationClass_noYellow', subset="train")
-        self.val_dataset = MyDataset_tvt_label_onehot(self.data_path, inputdir='JPEGImages_black', maskdir='SegmentationClass_noYellow', subset="val")
-        self.test_dataset = MyDataset_tvt_label_onehot(self.data_path, inputdir='JPEGImages_black', maskdir='SegmentationClass_noYellow', subset="test")
+        self.train_dataset = MyDataset(self.data_path, inputdir='JPEGImages', maskdir='SegmentationClass_noYellow', subset="train")
+        self.val_dataset = MyDataset(self.data_path, inputdir='JPEGImages', maskdir='SegmentationClass_noYellow', subset="val")
+        self.test_dataset = MyDataset(self.data_path, inputdir='JPEGImages', maskdir='SegmentationClass_noYellow', subset="test")
         self.train_data_loader = DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True)
         self.val_data_loader = DataLoader(self.val_dataset, batch_size=self.batch_size, shuffle=False)
         self.test_data_loader = DataLoader(self.test_dataset, batch_size=self.batch_size, shuffle=False)

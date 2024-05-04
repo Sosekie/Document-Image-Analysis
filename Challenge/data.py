@@ -7,6 +7,7 @@ from utils import *
 from PIL import ImageFilter
 from torchvision import transforms
 from torchvision.transforms import functional as TF
+from collections import defaultdict
 
 class MedianFilter(object):
     def __init__(self, size=3):
@@ -34,98 +35,9 @@ transform = transforms.Compose([
     transforms.Resize((960//2, 640//2)),
     transforms.ToTensor(),
 ])
-
+    
 
 class MyDataset(Dataset):
-    def __init__(self, path, inputdir, maskdir):
-        self.path = path
-        self.maskdir = maskdir
-        self.inputdir = inputdir
-        self.name = os.listdir(os.path.join(path, maskdir))
-
-    def __len__(self):
-        return len(self.name)
-
-    def __getitem__(self, index, resize = False):
-        segment_name = self.name[index]
-        segment_path = os.path.join(self.path, self.maskdir, segment_name)
-        image_path = os.path.join(self.path, self.inputdir, segment_name.replace('gif', 'jpg'))
-        if resize == True:
-            segment_image = keep_image_size_open(segment_path)
-            image = keep_image_size_open_rgb(image_path)
-        else:
-            segment_image = Image.open(segment_path).convert("RGB")
-            image = Image.open(image_path)
-        return transform(image), transform(segment_image)
-
-class MyDataset_tvt(Dataset):
-    def __init__(self, path, inputdir, maskdir, subset="train", seed=42):
-        self.path = path
-        self.maskdir = maskdir
-        self.inputdir = inputdir
-        all_names = os.listdir(os.path.join(path, maskdir))
-        train_val_names, test_names = train_test_split(all_names, test_size=0.1, random_state=seed)
-        train_names, val_names = train_test_split(train_val_names, test_size=1/9, random_state=seed)
-        if subset == "train":
-            self.names = train_names
-        elif subset == "val":
-            self.names = val_names
-        elif subset == "test":
-            self.names = test_names
-        else:
-            raise ValueError(f"Unknown subset: {subset}")
-    def __len__(self):
-        return len(self.names)
-    def __getitem__(self, index):
-        segment_name = self.names[index]
-        segment_path = os.path.join(self.path, self.maskdir, segment_name)
-        image_path = os.path.join(self.path, self.inputdir, segment_name.replace('gif', 'jpg'))
-        segment_image = Image.open(segment_path).convert("RGB")
-        image = Image.open(image_path).convert("RGB")
-        return transform(image), transform(segment_image)
-    
-class MyDataset_tvt_label(Dataset):
-    def __init__(self, path, inputdir, maskdir, subset="train", seed=42):
-        self.path = path
-        self.maskdir = maskdir
-        self.inputdir = inputdir
-        all_names = os.listdir(os.path.join(path, maskdir))
-        train_val_names, test_names = train_test_split(all_names, test_size=0.1, random_state=seed)
-        train_names, val_names = train_test_split(train_val_names, test_size=1/9, random_state=seed)
-        if subset == "train":
-            self.names = train_names
-        elif subset == "val":
-            self.names = val_names
-        elif subset == "test":
-            self.names = test_names
-        else:
-            raise ValueError(f"Unknown subset: {subset}")
-
-        self.unique_classes = self._get_unique_classes()
-
-    def _get_unique_classes(self):
-        unique_labels = set()
-        for name in self.names:
-            segment_path = os.path.join(self.path, self.maskdir, name)
-            segment_image = Image.open(segment_path)
-            segment_labels = np.array(segment_image)
-            unique_labels.update(np.unique(segment_labels))
-        return list(unique_labels)
-
-    def __len__(self):
-        return len(self.names)
-    
-    def __getitem__(self, index):
-        segment_name = self.names[index]
-        segment_path = os.path.join(self.path, self.maskdir, segment_name)
-        image_path = os.path.join(self.path, self.inputdir, segment_name.replace('gif', 'jpg'))
-        segment_image = Image.open(segment_path)
-        segment_labels = np.array(segment_image)[::2, ::2]
-        image = Image.open(image_path).convert("RGB")
-        return transform(image), segment_labels
-    
-
-class MyDataset_tvt_label_onehot(Dataset):
     def __init__(self, path, inputdir, maskdir, subset="train", seed=42):
         self.path = path
         self.inputdir = inputdir
@@ -143,16 +55,26 @@ class MyDataset_tvt_label_onehot(Dataset):
         else:
             raise ValueError(f"Unknown subset: {subset}")
 
-        self.unique_classes = self._get_unique_classes()
+        self.unique_classes, self.color_map = self._get_unique_classes_and_colors()
 
-    def _get_unique_classes(self):
-        unique_labels = set()
-        for name in self.names:
-            segment_path = os.path.join(self.path, self.maskdir, name)
-            segment_image = Image.open(segment_path)
-            segment_labels = np.array(segment_image)
-            unique_labels.update(np.unique(segment_labels))
-        return list(unique_labels)
+    def _get_unique_classes_and_colors(self):
+        unique_labels = [0, 1, 2, 3, 4, 5]
+        color_map = {}
+        colors = [(0,255,255), (255,0,255), (0,255,0), (255,0,0), (0,0,255), (0,0,0)]
+        for label, color in zip(sorted(unique_labels), colors):
+            color_map[label] = color
+        return unique_labels, color_map
+
+    def one_hot_to_rgb(self, one_hot_labels):
+        batch_size, num_classes, height, width = 1, 6, 480, 320
+        rgb_images = np.zeros((batch_size, height, width, 3), dtype=np.uint8)
+        one_hot_labels = (one_hot_labels > 0.5).astype(np.uint8)
+        for c in range(num_classes):
+            color = np.array(self.color_map[c], dtype=np.uint8)
+            for i in range(batch_size):
+                rgb_images[i][one_hot_labels[i, c] == 1] = color
+        
+        return rgb_images
 
     def __len__(self):
         return len(self.names)

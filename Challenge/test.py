@@ -1,6 +1,6 @@
 import tqdm
 import torch
-from matrix import *
+from util.matrix import *
 
 def test(model, test_data_loader, device):
     model.eval()
