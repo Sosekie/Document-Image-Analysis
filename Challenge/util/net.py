@@ -165,10 +165,10 @@ class BackAllConv2d(nn.Module):
 
         return output
 
-class UNet(nn.Module):
+class UNet_Res(nn.Module):
     #ct: channel times
-    def __init__(self,num_classes = 3, ct = 4):
-        super(UNet, self).__init__()
+    def __init__(self,num_classes = 6, ct = 4):
+        super(UNet_Res, self).__init__()
         self.ba = BackAllConv2d(25, 160.0, 0.9)
         self.bc1 = BackConv2d(5, 3, 160.0, 0.8)
         # self.bc2 = BackConv2d(25, 3, 170.0, 0.8)
@@ -189,19 +189,19 @@ class UNet(nn.Module):
         self.c5 = Conv_Block(128*ct,256*ct)
         self.r5 = DownResidual(128*ct,256*ct)
         
-        self.d5 = DownSample(256*ct)
-        self.cl1 = Conv_Block(256*ct,512*ct)
-        self.rl1 = DownResidual(256*ct,512*ct)
+        # self.d5 = DownSample(256*ct)
+        # self.cl1 = Conv_Block(256*ct,512*ct)
+        # self.rl1 = DownResidual(256*ct,512*ct)
 
-        self.d6 = DownSample(512*ct)
-        self.cl2 = Conv_Block(512*ct,1024*ct)
-        self.rl2 = DownResidual(512*ct,1024*ct)
+        # self.d6 = DownSample(512*ct)
+        # self.cl2 = Conv_Block(512*ct,1024*ct)
+        # self.rl2 = DownResidual(512*ct,1024*ct)
 
-        self.ul2 = UpSample(1024*ct)
-        self.cl2_2 = Conv_Block(1024*ct,512*ct)
+        # self.ul2 = UpSample(1024*ct)
+        # self.cl2_2 = Conv_Block(1024*ct,512*ct)
 
-        self.ul1 = UpSample(512*ct)
-        self.cl1_1 = Conv_Block(512*ct,256*ct)
+        # self.ul1 = UpSample(512*ct)
+        # self.cl1_1 = Conv_Block(512*ct,256*ct)
 
         self.u1 = UpSample(256*ct)
         self.c6 = Conv_Block(256*ct,128*ct)
@@ -219,7 +219,7 @@ class UNet(nn.Module):
         self.sigmoid = nn.Sigmoid()
         self.relu = nn.LeakyReLU()
 
-    def forward(self,x, view):
+    def forward(self,x):
 
         # xb1 = self.bc1(x)
         # xba = self.ba(x)
@@ -241,28 +241,28 @@ class UNet(nn.Module):
         R5 = self.c5(R5)
         R5 = self.r5(R5,R4)
     
-        # cause UNet use 224x224, but here x[960, 640]->[480, 320]->[240, 160]->[120, 80]->[60, 40]->[30, 20]->[15, 10]
-        #[60, 40]->[30, 20]
-        R5d = self.d5(R5)
-        Rl1 = self.cl1(R5d)
-        Rl1 = self.rl1(Rl1,R5)
+        # # cause UNet use 224x224, but here x[960, 640]->[480, 320]->[240, 160]->[120, 80]->[60, 40]->[30, 20]->[15, 10]
+        # #[60, 40]->[30, 20]
+        # R5d = self.d5(R5)
+        # Rl1 = self.cl1(R5d)
+        # Rl1 = self.rl1(Rl1,R5)
 
-        #[30, 20]->[15, 10]
-        R6d = self.d6(Rl1)
-        Rl2 = self.cl2(R6d)
-        Rl2 = self.rl2(Rl2,Rl1)
+        # #[30, 20]->[15, 10]
+        # R6d = self.d6(Rl1)
+        # Rl2 = self.cl2(R6d)
+        # Rl2 = self.rl2(Rl2,Rl1)
 
-        #[15, 10]->[30, 20]
-        Ol1 = self.ul2(Rl2, Rl1)
-        Ol1 = self.cl2_2(Ol1)
+        # #[15, 10]->[30, 20]
+        # Ol1 = self.ul2(Rl2, Rl1)
+        # Ol1 = self.cl2_2(Ol1)
 
-        #[30, 20]->[60, 40]
-        Ol2 = self.ul1(Ol1, R5)
-        Ol2 = self.cl1_1(Ol2)
+        # #[30, 20]->[60, 40]
+        # Ol2 = self.ul1(Ol1, R5)
+        # Ol2 = self.cl1_1(Ol2)
 
         # [1024,60,40], R5, Ol 
 
-        O1 = self.u1(Ol2, R4)
+        O1 = self.u1(R5, R4)
         O1 = self.c6(O1)
         # O1 = self.r6(O1,R5)
 
@@ -278,6 +278,8 @@ class UNet(nn.Module):
         last = self.out(O4).squeeze(1)
 
         output = self.sigmoid(last)
+
+        return output
 
         if view:
             R2_v = F.interpolate(R2,scale_factor=2,mode='nearest')
@@ -323,7 +325,7 @@ class UNet_simple(nn.Module):
         self.norm = nn.BatchNorm2d(num_classes)
         self.softmax = nn.Softmax()
 
-    def forward(self, x, view):
+    def forward(self, x):
         R1 = self.c1(x)
         R2 = self.c2(self.d1(R1))
         R3 = self.c3(self.d2(R2))
@@ -335,6 +337,8 @@ class UNet_simple(nn.Module):
         O4 = self.c9(self.u4(O3, R1))
         last = self.out(O4).squeeze(1)
         output = self.sigmoid(last)
+
+        return output
 
         if view:
             R1_v = R1
@@ -350,80 +354,3 @@ class UNet_simple(nn.Module):
             return output, middle_x
         else:
             return output
-        
-
-# UNet++
-class Conv_Block(nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super(Conv_Block, self).__init__()
-        self.conv = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, 3, padding=1),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(out_channels, out_channels, 3, padding=1),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True)
-        )
-
-    def forward(self, x):
-        return self.conv(x)
-
-class DownSample(nn.Module):
-    def __init__(self, in_channels):
-        super(DownSample, self).__init__()
-        self.downsample = nn.MaxPool2d(2)
-
-    def forward(self, x):
-        return self.downsample(x)
-
-class UpSample(nn.Module):
-    def __init__(self, in_channels):
-        super(UpSample, self).__init__()
-        self.upsample = nn.ConvTranspose2d(in_channels, in_channels // 2, kernel_size=2, stride=2)
-
-    def forward(self, x, skip):
-        x = self.upsample(x)
-        # Align dimensions
-        diffY = skip.size()[2] - x.size()[2]
-        diffX = skip.size()[3] - x.size()[3]
-        x = F.pad(x, [diffX // 2, diffX - diffX // 2,
-                      diffY // 2, diffY - diffY // 2])
-        x = torch.cat([x, skip], dim=1)
-        return x
-
-class UNetPlusPlus(nn.Module):
-    def __init__(self, num_classes=6):
-        super(UNetPlusPlus, self).__init__()
-        self.c1 = Conv_Block(3, 64)
-        self.d1 = DownSample(64)
-        self.c2 = Conv_Block(64, 128)
-        self.d2 = DownSample(128)
-        self.c3 = Conv_Block(128, 256)
-        self.d3 = DownSample(256)
-        self.c4 = Conv_Block(256, 512)
-        self.d4 = DownSample(512)
-        self.c5 = Conv_Block(512, 1024)
-        self.u1 = UpSample(1024)
-        self.c6 = Conv_Block(1024, 512)
-        self.u2 = UpSample(512)
-        self.c7 = Conv_Block(512, 256)
-        self.u3 = UpSample(256)
-        self.c8 = Conv_Block(256, 128)
-        self.u4 = UpSample(128)
-        self.c9 = Conv_Block(128, 64)
-        self.out = nn.Conv2d(64, num_classes, 3, padding=1)
-        self.sigmoid = nn.Sigmoid()
-
-    def forward(self, x):
-        R1 = self.c1(x)
-        R2 = self.c2(self.d1(R1))
-        R3 = self.c3(self.d2(R2))
-        R4 = self.c4(self.d3(R3))
-        R5 = self.c5(self.d4(R4))
-        O1 = self.c6(self.u1(R5, R4))
-        O2 = self.c7(self.u2(O1, R3))
-        O3 = self.c8(self.u3(O2, R2))
-        O4 = self.c9(self.u4(O3, R1))
-        last = self.out(O4)
-        output = self.sigmoid(last)
-        return output

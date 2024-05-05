@@ -80,17 +80,29 @@ class MyDataset(Dataset):
         return len(self.names)
     
     def __getitem__(self, index):
+        colors = np.array([[0, 255, 255], [255, 0, 255], [0, 255, 0], [255, 0, 0], [0, 0, 255], [0, 0, 0]])
         segment_name = self.names[index]
         segment_path = os.path.join(self.path, self.maskdir, segment_name)
         image_path = os.path.join(self.path, self.inputdir, segment_name.replace('gif', 'jpg'))
-        segment_image = Image.open(segment_path)
+        segment_image = Image.open(segment_path).convert("RGB")
         segment_labels = np.array(segment_image)[::2, ::2]
         image = Image.open(image_path).convert("RGB")
 
+        # print(segment_labels.shape)
+
         # Convert segment_labels to one-hot encoding
-        one_hot_labels = np.zeros((len(self.unique_classes), segment_labels.shape[0], segment_labels.shape[1]), dtype=np.int32)
-        for i, unique_label in enumerate(self.unique_classes):
-            one_hot_labels[i, :, :] = (segment_labels == unique_label)
+        # one_hot_labels = np.zeros((len(self.unique_classes), segment_labels.shape[0], segment_labels.shape[1]), dtype=np.int32)
+        # for i, unique_label in enumerate(self.unique_classes):
+        #     one_hot_labels[i, :, :] = (segment_labels == unique_label)
+
+        one_hot_labels = np.zeros((*segment_labels.shape[:2], 6), dtype=np.uint8)
+        for i, color in enumerate(colors):
+            # print(segment_labels.shape, color.shape)
+            match = np.all(segment_labels == np.array(color, dtype=np.uint8), axis=-1)
+            one_hot_labels[:, :, i] = match
+
+        one_hot_labels = one_hot_labels.transpose((2, 0, 1))
+        # print(one_hot_labels.shape)
 
         return transform(image), one_hot_labels
     

@@ -2,16 +2,18 @@ import os
 import torch
 from torch.utils.data import DataLoader
 from data import MyDataset
-from util.net import UNet_simple, UNetPlusPlus
+from util.net import UNet_simple, UNet_Res
+from util.UNetPlusPlus import UNetPlusPlus
+from util.model import UnetDense
 from util.train import train
-from test import test
+from util.test import test
 
 
 class MyPipeline:
-    def __init__(self, data_path, weights_path='params', save_path='train_image', result_path='result', batch_size=1):
+    def __init__(self, data_path, weights_path='params', pretrained='best_model_weights.pth', save_path='train_image', result_path='result', batch_size=1):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.weights_path = weights_path
-        self.weight_path = os.path.join(weights_path, 'best_model_weights.pth')
+        self.weight_path = os.path.join(weights_path, pretrained)
         self.data_path = data_path
         self.save_path = save_path
         self.result_path = result_path
@@ -36,7 +38,7 @@ class MyPipeline:
         self.test_data_loader = DataLoader(self.test_dataset, batch_size=self.batch_size, shuffle=False)
 
     def init_model(self):
-        model = UNetPlusPlus().to(self.device)
+        model = UNet_Res().to(self.device)
         if os.path.exists(self.weight_path):
             model.load_state_dict(torch.load(self.weight_path))
             print('Successful load weight!')
@@ -53,6 +55,7 @@ class MyPipeline:
 
 
 if __name__ == '__main__':
+    # pipeline = MyPipeline(data_path='data', weights_path='checkpoints', pretrained='UNet_dense.pth', batch_size=1)
     pipeline = MyPipeline(data_path='data', batch_size=1)
     pipeline.train(epochs=300)
     pipeline.test()

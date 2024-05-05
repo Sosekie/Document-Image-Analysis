@@ -3,7 +3,7 @@ from torch import nn, optim
 import torch
 from torchvision.utils import save_image
 from data import *
-from util.matrix import *
+from util.metrics import *
 import random
 
 def train(model, train_data_loader, train_dataset, val_data_loader, val_dataset, device, epochs = 100):
