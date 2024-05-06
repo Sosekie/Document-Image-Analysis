@@ -41,7 +41,7 @@ class MyPipeline:
     def init_model(self):
         model = self.using_model.to(self.device)
         if os.path.exists(self.weight_path):
-            model.load_state_dict(torch.load(self.weight_path))
+            model.load_state_dict(torch.load(self.weight_path, map_location=torch.device(self.device)))
             print('Successful load weight!')
         else:
             print('Not successful load weight')
@@ -56,7 +56,11 @@ class MyPipeline:
 
 
 if __name__ == '__main__':
-    pipeline = MyPipeline(data_path='data', using_model=UNetPlusPlus(), weights_path='checkpoints', pretrained='UNet++.pth', batch_size=1)
+    # pipeline = MyPipeline(data_path='data', using_model=UNetPlusPlus(), weights_path='checkpoints', pretrained='UNet++.pth', batch_size=1)
     # pipeline = MyPipeline(data_path='data', batch_size=1)
     # pipeline.train(epochs=300)
-    pipeline.test()
+    models = [UNet_simple(), UNetPlusPlus(), UnetDense(), UNet_Res()]
+    checkpoints = ['UNet_simple.pth', 'UNet++.pth', 'UNet_dense.pth', 'UNet_res.pth']
+    for index in range(len(models)):
+        pipeline = MyPipeline(data_path='data', using_model=models[index], weights_path='checkpoints', pretrained=checkpoints[index], batch_size=1)
+        pipeline.test()
