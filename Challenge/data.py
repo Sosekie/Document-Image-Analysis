@@ -55,27 +55,6 @@ class MyDataset(Dataset):
         else:
             raise ValueError(f"Unknown subset: {subset}")
 
-        self.unique_classes, self.color_map = self._get_unique_classes_and_colors()
-
-    def _get_unique_classes_and_colors(self):
-        unique_labels = [0, 1, 2, 3, 4, 5]
-        color_map = {}
-        colors = [(0,255,255), (255,0,255), (0,255,0), (255,0,0), (0,0,255), (0,0,0)]
-        for label, color in zip(sorted(unique_labels), colors):
-            color_map[label] = color
-        return unique_labels, color_map
-
-    def one_hot_to_rgb(self, one_hot_labels):
-        batch_size, num_classes, height, width = 1, 6, 480, 320
-        rgb_images = np.zeros((batch_size, height, width, 3), dtype=np.uint8)
-        one_hot_labels = (one_hot_labels > 0.5).astype(np.uint8)
-        for c in range(num_classes):
-            color = np.array(self.color_map[c], dtype=np.uint8)
-            for i in range(batch_size):
-                rgb_images[i][one_hot_labels[i, c] == 1] = color
-        
-        return rgb_images
-
     def __len__(self):
         return len(self.names)
     
@@ -87,22 +66,11 @@ class MyDataset(Dataset):
         segment_image = Image.open(segment_path).convert("RGB")
         segment_labels = np.array(segment_image)[::2, ::2]
         image = Image.open(image_path).convert("RGB")
-
-        # print(segment_labels.shape)
-
-        # Convert segment_labels to one-hot encoding
-        # one_hot_labels = np.zeros((len(self.unique_classes), segment_labels.shape[0], segment_labels.shape[1]), dtype=np.int32)
-        # for i, unique_label in enumerate(self.unique_classes):
-        #     one_hot_labels[i, :, :] = (segment_labels == unique_label)
-
         one_hot_labels = np.zeros((*segment_labels.shape[:2], 6), dtype=np.uint8)
         for i, color in enumerate(colors):
-            # print(segment_labels.shape, color.shape)
             match = np.all(segment_labels == np.array(color, dtype=np.uint8), axis=-1)
             one_hot_labels[:, :, i] = match
-
         one_hot_labels = one_hot_labels.transpose((2, 0, 1))
-        # print(one_hot_labels.shape)
 
         return transform(image), one_hot_labels
     
