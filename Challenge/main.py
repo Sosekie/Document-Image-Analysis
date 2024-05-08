@@ -59,6 +59,8 @@ if __name__ == '__main__':
     # pipeline = MyPipeline(data_path='data', using_model=UNetPlusPlus(), weights_path='checkpoints', pretrained='UNet++.pth', batch_size=1)
     # pipeline = MyPipeline(data_path='data', batch_size=1)
     # pipeline.train(epochs=300)
+    # pipeline.test()
+
     models = [UNet_simple(), UNetPlusPlus(), UnetDense(), UNet_Res()]
     checkpoints = ['UNet_simple.pth', 'UNet++.pth', 'UNet_dense.pth', 'UNet_res.pth']
     for index in range(len(models)):

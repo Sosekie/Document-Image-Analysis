@@ -19,10 +19,15 @@ def calculate_f1_score(out_image, segment_image, threshold=0.5):
     tp = torch.logical_and(out_image_binary, segment_image_binary).float().sum(dim=(2, 3))
     fp = torch.logical_and(out_image_binary, torch.logical_not(segment_image_binary)).float().sum(dim=(2, 3))
     fn = torch.logical_and(torch.logical_not(out_image_binary), segment_image_binary).float().sum(dim=(2, 3))
-    precision = tp / (tp + fp + 1e-6)
-    recall = tp / (tp + fn + 1e-6)
+    precision = (tp + 1e-6) / (tp + fp + 1e-6)
+    recall = (tp + 1e-6) / (tp + fn + 1e-6)
     f1_score = 2 * (precision * recall) / (precision + recall + 1e-6)
     mean_f1 = f1_score.mean(dim=1)
+    # print('precision - ', precision)
+    # print('recall - ', recall)
+    # print('f1_score - ', f1_score)
+    # print('mean_f1 - ', mean_f1)
+
     return f1_score, mean_f1
 
 def calculate_fn_fp(out_image, segment_image, threshold=0.5):
